@@ -1,0 +1,8 @@
+{
+  "name": "RulesAndFaq",
+  "version": "1.0.0",
+  "description": "rulesandfaq.description",
+  "authors": ["BanB1yat"],
+  "providers": ["Flute\\Modules\\RulesAndFaq\\ServiceProviders\\RulesAndServiceProvider"],
+  "dependencies": {}
+}
