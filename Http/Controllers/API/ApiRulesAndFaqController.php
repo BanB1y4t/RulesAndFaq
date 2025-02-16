@@ -149,17 +149,16 @@ class ApiRulesAndFaqController extends AbstractController
         $entityClass = ($type === 'rules') ? RulesEntry::class : FaqEntry::class;
         $blockClass = ($type === 'rules') ? RulesEntryBlock::class : FaqEntryBlock::class;
         $idField = ($type === 'rules') ? 'rules_id' : 'faq_id';
+        $fiendBlock = ($type === 'rules') ? 'rulesEntry_rulesId' : 'faqEntry_faqId';
 
         try {
             // Проверяем наличие ID для существующей записи
             $itemId = $data['id'] ?? null;
-
             if (!$itemId) {
                 return $this->error('Item ID is required', 400);
             }
 
             $item = rep($entityClass)->select()->where([$idField => $itemId])->fetchOne();
-
             if (!$item) {
                 return $this->error('Item not found', 404);
             }
@@ -172,21 +171,22 @@ class ApiRulesAndFaqController extends AbstractController
             }
 
             // Обновляем блоки, если они переданы
+            $block = null;
             if (!empty($data['blocks'])) {
-                // Проверяем, существует ли уже блок
-                $block = rep($blockClass)->select()->where(['id' => $itemId])->fetchOne();
-
+                $block = rep($blockClass)->select()->where([$fiendBlock => $itemId])->fetchOne();
                 if (!$block) {
                     $block = new $blockClass();
-                    $block->item = $item;
+                    $block->$idField = $itemId;
                 }
-
                 $block->json = $data['blocks'];
-                $item->blocks = $block;
             }
 
             // Сохраняем изменения
-            transaction($item)->run();
+            if ($block) {
+                transaction([$item, $block])->run();
+            } else {
+                transaction($item)->run();
+            }
 
             return $this->success();
         } catch (\Exception $e) {
